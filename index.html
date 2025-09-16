@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Store Inventory Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+            animation: pulsate 2s infinite alternate;
+        }
+
+        @keyframes pulsate {
+            0% {
+                text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+            }
+            100% {
+                text-shadow: 0 0 15px #0ff, 0 0 25px #0ff, 0 0 40px #0ff, 0 0 50px #0ff;
+            }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .card h2 {
+            color: #0ff;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .card .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-box {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #0ff;
+            border-radius: 30px;
+            padding: 10px 20px;
+            color: white;
+            width: 300px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00ccff, #00ffcc);
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #00ffcc, #00ccff);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .inventory-table th {
+            background: rgba(0, 255, 255, 0.2);
+            color: #0ff;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .inventory-table tr:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .low-stock {
+            color: #ff4d4d;
+            text-shadow: 0 0 10px #ff4d4d;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #0f0c29, #302b63);
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+        }
+
+        .modal h2 {
+            color: #0ff;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #0ff;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #0ff;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chart-container {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .chart-title {
+            color: #0ff;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .search-box {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-warehouse"></i> Neon Stock Manager</h1>
+            <p>Manage your inventory with style and precision</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>Total Products</h2>
+                <p class="value" id="total-products">0</p>
+            </div>
+            <div class="card">
+                <h2>Total Value</h2>
+                <p class="value" id="total-value">$0</p>
+            </div>
+            <div class="card">
+                <h2>Low Stock Items</h2>
+                <p class="value" id="low-stock-count">0</p>
+            </div>
+            <div class="card">
+                <h2>Out of Stock</h2>
+                <p class="value" id="out-of-stock-count">0</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-box" placeholder="Search products...">
+            <button class="btn" id="add-product-btn"><i class="fas fa-plus"></i> Add New Product</button>
+        </div>
+
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Stock Level</th>
+                    <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Total Value</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-body">
+                <!-- Inventory data will be populated here -->
+            </tbody>
+        </table>
+
+        <div class="chart-container">
+            <h3 class="chart-title">Stock Level Overview</h3>
+            <canvas id="stock-chart"></canvas>
+        </div>
+
+        <footer>
+            <p>Neon Stock Manager &copy; 2023 | Manage your inventory in style</p>
+        </footer>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Add New Product</h2>
+            <div class="form-group">
+                <label for="product-name">Product Name</label>
+                <input type="text" id="product-name" placeholder="Enter product name">
+            </div>
+            <div class="form-group">
+                <label for="product-category">Category</label>
+                <input type="text" id="product-category" placeholder="Enter category">
+            </div>
+            <div class="form-group">
+                <label for="product-stock">Stock Level</label>
+                <input type="number" id="product-stock" placeholder="Enter stock quantity">
+            </div>
+            <div class="form-group">
+                <label for="product-cost">Cost Price ($)</label>
+                <input type="number" id="product-cost" placeholder="Enter cost price" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="product-price">Selling Price ($)</label>
+                <input type="number" id="product-price" placeholder="Enter selling price" step="0.01">
+            </div>
+            <div class="form-actions">
+                <button class="btn" id="cancel-btn">Cancel</button>
+                <button class="btn" id="save-btn">Save Product</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sample initial inventory data
+        let inventory = [
+            { id: 1, name: "Wireless Headphones", category: "Electronics", stock: 15, cost: 45.00, price: 89.99 },
+            { id: 2, name: "Smart Watch", category: "Electronics", stock: 8, cost: 89.00, price: 159.99 },
+            { id: 3, name: "Coffee Maker", category: "Appliances", stock: 12, cost: 55.00, price: 99.99 },
+            { id: 4, name: "Desk Lamp", category: "Home", stock: 20, cost: 18.00, price: 34.99 },
+            { id: 5, name: "Water Bottle", category: "Kitchen", stock: 3, cost: 8.00, price: 19.99 },
+            { id: 6, name: "Yoga Mat", category: "Fitness", stock: 0, cost: 15.00, price: 29.99 },
+            { id: 7, name: "Bluetooth Speaker", category: "Electronics", stock: 6, cost: 32.00, price: 59.99 }
+        ];
+
+        // DOM elements
+        const inventoryBody = document.getElementById('inventory-body');
+        const totalProducts = document.getElementById('total-products');
+        const totalValue = document.getElementById('total-value');
+        const lowStockCount = document.getElementById('low-stock-count');
+        const outOfStockCount = document.getElementById('out-of-stock-count');
+        const modal = document.getElementById('product-modal');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const addProductBtn = document.getElementById('add-product-btn');
+
+        // Initialize the page
+        function init() {
+            renderInventory();
+            updateDashboard();
+            initChart();
+        }
+
+        // Render inventory table
+        function renderInventory() {
+            inventoryBody.innerHTML = '';
+            
+            inventory.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Apply low stock warning
+                const stockClass = item.stock === 0 ? 'low-stock' : (item.stock < 5 ? 'low-stock' : '');
+                
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td class="${stockClass}">${item.stock}</td>
+                    <td>$${item.cost.toFixed(2)}</td>
+                    <td>$${item.price.toFixed(2)}</td>
+                    <td>$${(item.stock * item.cost).toFixed(2)}</td>
+                    <td>
+                        <button class="btn" onclick="editProduct(${item.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn" onclick="deleteProduct(${item.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                
+                inventoryBody.appendChild(row);
+            });
+        }
+
+        // Update dashboard metrics
+        function updateDashboard() {
+            totalProducts.textContent = inventory.length;
+            
+            const totalVal = inventory.reduce((sum, item) => sum + (item.stock * item.cost), 0);
+            totalValue.textContent = `$${totalVal.toFixed(2)}`;
+            
+            const lowStock = inventory.filter(item => item.stock > 0 && item.stock < 5).length;
+            lowStockCount.textContent = lowStock;
+            
+            const outOfStock = inventory.filter(item => item.stock === 0).length;
+            outOfStockCount.textContent = outOfStock;
+        }
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('stock-chart').getContext('2d');
+            
+            // Group by category
+            const categories = [...new Set(inventory.map(item => item.category))];
+            const categoryCounts = categories.map(cat => {
+                return inventory.filter(item => item.category === cat).length;
+            });
+            
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: 'Products per Category',
+                        data: categoryCounts,
+                        backgroundColor: 'rgba(0, 255, 255, 0.5)',
+                        borderColor: 'rgba(0, 255, 255, 1)',
+                        borderWidth: 1,
+                        hoverBackgroundColor: 'rgba(0, 255, 255, 0.7)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#0ff'
+                            },
+                            grid: {
+                                color: 'rgba(0, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#0ff'
+                            },
+                            grid: {
+                                color: 'rgba(0, 255, 255, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#0ff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add new product
+        addProductBtn.addEventListener('click', () => {
+            document.getElementById('modal-title').textContent = 'Add New Product';
+            clearModalFields();
+            modal.style.display = 'flex';
+        });
+
+        // Save product
+        saveBtn.addEventListener('click', () => {
+            const name = document.getElementById('product-name').value;
+            const category = document.getElementById('product-category').value;
+            const stock = parseInt(document.getElementById('product-stock').value);
+            const cost = parseFloat(document.getElementById('product-cost').value);
+            const price = parseFloat(document.getElementById('product-price').value);
+            
+            if (name && category && !isNaN(stock) && !isNaN(cost) && !isNaN(price)) {
+                // In a real app, we would check if we're editing or adding
+                const newId = inventory.length > 0 ? Math.max(...inventory.map(item => item.id)) + 1 : 1;
+                
+                inventory.push({
+                    id: newId,
+                    name,
+                    category,
+                    stock,
+                    cost,
+                    price
+                });
+                
+                renderInventory();
+                updateDashboard();
+                modal.style.display = 'none';
+            } else {
+                alert('Please fill all fields with valid data');
+            }
+        });
+
+        // Cancel edit/add
+        cancelBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        // Edit product (simplified)
+        function editProduct(id) {
+            const product = inventory.find(item => item.id === id);
+            if (product) {
+                document.getElementById('modal-title').textContent = 'Edit Product';
+                document.getElementById('product-name').value = product.name;
+                document.getElementById('product-category').value = product.category;
+                document.getElementById('product-stock').value = product.stock;
+                document.getElementById('product-cost').value = product.cost;
+                document.getElementById('product-price').value = product.price;
+                
+                modal.style.display = 'flex';
+                
+                // For simplicity, we'll remove and re-add instead of proper editing
+                saveBtn.onclick = function() {
+                    const name = document.getElementById('product-name').value;
+                    const category = document.getElementById('product-category').value;
+                    const stock = parseInt(document.getElementById('product-stock').value);
+                    const cost = parseFloat(document.getElementById('product-cost').value);
+                    const price = parseFloat(document.getElementById('product-price').value);
+                    
+                    if (name && category && !isNaN(stock) && !isNaN(cost) && !isNaN(price)) {
+                        // Remove the old product
+                        inventory = inventory.filter(item => item.id !== id);
+                        
+                        // Add the updated product
+                        inventory.push({
+                            id,
+                            name,
+                            category,
+                            stock,
+                            cost,
+                            price
+                        });
+                        
+                        renderInventory();
+                        updateDashboard();
+                        modal.style.display = 'none';
+                    } else {
+                        alert('Please fill all fields with valid data');
+                    }
+                };
+            }
+        }
+
+        // Delete product
+        function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                inventory = inventory.filter(item => item.id !== id);
+                renderInventory();
+                updateDashboard();
+            }
+        }
+
+        // Clear modal fields
+        function clearModalFields() {
+            document.getElementById('product-name').value = '';
+            document.getElementById('product-category').value = '';
+            document.getElementById('product-stock').value = '';
+            document.getElementById('product-cost').value = '';
+            document.getElementById('product-price').value = '';
+        }
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
